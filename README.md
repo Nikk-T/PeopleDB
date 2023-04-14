@@ -1,0 +1,2 @@
+# PeopleDB
+Educational project. JDBC
