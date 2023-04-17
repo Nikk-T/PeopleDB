@@ -1,6 +1,8 @@
 package com.creativeinstall.peopledb.model;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 public class Person {
     private Long id;
@@ -55,5 +57,20 @@ public class Person {
                 ", lastName='" + lastName + '\'' +
                 ", dob=" + dob +
                 '}';
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Person person)) return false;
+        return Objects.equals(id, person.id) && firstName.equals(person.firstName) && lastName.equals(person.lastName) &&
+                dob.withZoneSameInstant(ZoneId.of("+0")).equals(person.dob.withZoneSameInstant(ZoneId.of("+0"))); // We have to normalize time Zone because the person saved to database has no Time Zone on it.
+                                                                                                                                // it goes there NORMALIZED to time zone GMT (See savePerson() method)
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, dob);
     }
 }

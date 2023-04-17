@@ -12,6 +12,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.FactoryBasedNavigableListAssert.assertThat;
 
@@ -51,5 +52,46 @@ public class PeopleRepositoryTests {
         Person savedPerson2 = repo.save(bobby);
         Assertions.assertThat(savedPerson1.getId()).isNotEqualTo(savedPerson2.getId());
     }
+
+    @Test
+    public void canFindPersonById() {
+        Person john = new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2")));
+        Person savedPerson = repo.save(john);
+        Person foundPerson = repo.findByID(savedPerson.getId()).get();
+        Assertions.assertThat(foundPerson).isEqualTo(savedPerson);
+    }
+
+    @Test
+    public void testPersonNotFound() {
+        Optional<Person> foundPerson = repo.findByID(-1L);
+        Assertions.assertThat(foundPerson).isEmpty();
+    }
+
+    @Test
+    public void canGetCount() {
+        long startCount = repo.count();
+        repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
+        repo.save(new Person("Bart", "Maniac", ZonedDateTime.of(1982,11,15,15,15,00,00, ZoneId.of("+2"))));
+        long endCount = repo.count();
+        Assertions.assertThat(endCount).isEqualTo(startCount + 2);
+        System.out.println("Total amount of records is: " + endCount);
+    }
+
+    @Test
+    public void canDelete() {
+        Person savedPerson = repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
+        long startCount = repo.count();
+        repo.delete(savedPerson);
+        long endCount = repo.count();
+        Assertions.assertThat(endCount).isEqualTo(startCount - 1);
+    }
+
+    @Test
+    public void canDeleteMultiplePeople() {
+        Person p1 = repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
+        Person p2 = repo.save(new Person("Bart", "Maniac", ZonedDateTime.of(1982,11,15,15,15,00,00, ZoneId.of("+2"))));
+        repo.delete(p1, p2);
+    }
+
 
 }
