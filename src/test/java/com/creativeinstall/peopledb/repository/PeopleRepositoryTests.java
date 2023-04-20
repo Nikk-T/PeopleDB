@@ -7,13 +7,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.FactoryBasedNavigableListAssert.assertThat;
 
 public class PeopleRepositoryTests {
@@ -91,6 +95,33 @@ public class PeopleRepositoryTests {
         Person p1 = repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
         Person p2 = repo.save(new Person("Bart", "Maniac", ZonedDateTime.of(1982,11,15,15,15,00,00, ZoneId.of("+2"))));
         repo.delete(p1, p2);
+    }
+    @Test
+    public void canUpdate() {
+        Person savedPerson = repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
+        Person foundPersonBeforeUpdate = repo.findByID(savedPerson.getId()).get();
+        savedPerson.setSalary(BigDecimal.valueOf(120000));
+        repo.update(savedPerson);
+        Person foundPersonAfterUpdate = repo.findByID(savedPerson.getId()).get();
+        Assertions.assertThat(foundPersonAfterUpdate.getSalary()).isNotEqualTo(foundPersonBeforeUpdate.getSalary());
+    }
+
+    @Test // this tes actually does not test System under test, just local test if srteam approach will work
+    public void experiment() {
+        Person p1 = new Person (10L, null, null, null);
+        Person p2 = new Person (20L, null, null, null);
+        Person p3 = new Person (30L, null, null, null);
+        Person p4 = new Person (40L, null, null, null);
+        Person p5 = new Person (50L, null, null, null);
+
+        Person[] people = Arrays.asList(p1, p2, p3, p4, p5).toArray(new Person[]{}); // making an array out of 5 Persons
+
+        String ids = Arrays.stream(people)
+                .map(p -> p.getId())// now we made a stream out of array and converted it into stream of Longs
+                .map(String::valueOf)// now its stream of strings, that represent ID
+                .collect(joining(",")); // and now we made a coma delimited string of ID's - like 10, 20, 30, 40 etc. and we will use it as an argument for SQL statement
+
+        System.out.println(ids);
     }
 
 
