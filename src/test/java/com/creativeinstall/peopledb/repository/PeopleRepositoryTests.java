@@ -1,6 +1,7 @@
 package com.creativeinstall.peopledb.repository;
 
 import com.creativeinstall.peopledb.model.Person;
+import org.assertj.core.api.Assert;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ClassBasedNavigableIterableAssert;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,7 @@ import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -65,6 +67,11 @@ public class PeopleRepositoryTests {
         Assertions.assertThat(foundPerson).isEqualTo(savedPerson);
     }
 
+    @Test
+    public void canFindAll() {
+        List<Person> people = repo.findAll();
+        System.out.println(people);
+    }
     @Test
     public void testPersonNotFound() {
         Optional<Person> foundPerson = repo.findByID(-1L);
