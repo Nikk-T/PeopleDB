@@ -30,10 +30,7 @@ public class PeopleRepository {
             PreparedStatement ps = connection.prepareStatement(SAVE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, person.getFirstName());
             ps.setString(2, person.getLastName());
-            ps.setTimestamp(3, Timestamp.valueOf(person.getDob().withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime())); // SEE comment below
-            // the maniac construction above is happened because in JAVA class Person() we decided to store DOB as a ZonedDateTime,
-            // but in out SQL database we store a TimeStamp, so we need to convert our ZonedDateTime to time Zone of (+0) - its GMT
-            // and then convert the result to LocalDate, that allows to convert to SQL timestamp
+            ps.setTimestamp(3, convertDobFromZoned(person.getDob())); // SEE comment to method below
 
             int recordsAffected = ps.executeUpdate();
             ResultSet rs = ps.getGeneratedKeys();
@@ -121,7 +118,7 @@ public class PeopleRepository {
             PreparedStatement ps = connection.prepareStatement(UPDATE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, person.getFirstName());
             ps.setString(2, person.getLastName());
-            ps.setTimestamp(3, Timestamp.valueOf(person.getDob().withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime()));
+            ps.setTimestamp(3, convertDobFromZoned(person.getDob()));
             ps.setBigDecimal(4, person.getSalary());
             ps.setLong(5, person.getId());
 
@@ -134,4 +131,11 @@ public class PeopleRepository {
             throw new UnableToSaveException("Tried to save person: "+person);
         }
     }
+
+    private Timestamp convertDobFromZoned(ZonedDateTime dob) {
+        return Timestamp.valueOf(dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());
+    }
+    // the maniac construction above is happened because in JAVA class Person() we decided to store DOB as a ZonedDateTime,
+    // but in out SQL database we store a TimeStamp, so we need to convert our ZonedDateTime to time Zone of (+0) - its GMT
+    // and then convert the result to LocalDate, that allows to convert to SQL timestamp
 }
