@@ -9,8 +9,11 @@ import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.joining;
 
 abstract class CRUDRepository<T extends Entity> {
 
@@ -72,6 +75,63 @@ abstract class CRUDRepository<T extends Entity> {
         return entities;
     }
 
+    public long count() {
+        Long counter = 0L;
+        try {
+            PreparedStatement ps = connection.prepareStatement(getCountRecordsSql());
+            ResultSet resultSet = ps.executeQuery();
+            while (resultSet.next()) {
+                ++counter;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return counter;
+    }
+
+    public void delete(T entity) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(getDeleteByIdSql());
+            ps.setLong(1, entity.getId());
+            int affectedRecordsCount = ps.executeUpdate();
+            System.out.println("Records affected: " + affectedRecordsCount);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void delete(T...entities) {  // This is varArg (remember - its simple version of an array !! )
+        String ids = Arrays.stream(entities)  // make stream out of the array
+                .map(p -> p.getId())        // now we made a stream out of array and converted it into stream of Longs
+                .map(String::valueOf)       // now its stream of strings, that represent ID
+                .collect(joining(",")); // and now we made a coma delimited string of ID's - like 10, 20, 30, 40 etc.
+        // and we will use it as an argument for SQL statement
+        try {
+            Statement stat = connection.createStatement();
+            int i = stat.executeUpdate(getDeleteByMultipleIdSql().replace(":ids", ids)); // we replace (:ids) with our actual String ids
+            System.out.println("Records affected: " + i);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void update(T entity) {
+        try {
+            PreparedStatement ps = connection.prepareStatement(getUpdateByIdSql(), Statement.RETURN_GENERATED_KEYS);
+            MapForUpdate(entity, ps);
+
+            int recordsAffected = ps.executeUpdate();
+
+            System.out.printf("Records affected %d%n", recordsAffected);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new UnableToSaveException("Tried to save person:" + entity);
+        }
+    }
+
+    abstract void MapForUpdate(T entity, PreparedStatement ps) throws SQLException;
+
     abstract void mapForSave(T entity, PreparedStatement ps) throws SQLException ; // SEE comment to method below
 
     abstract String getSaveSql();
@@ -84,6 +144,16 @@ abstract class CRUDRepository<T extends Entity> {
      */
     abstract String getFindByIdSQL();
     abstract String getFindAllSql();
+    abstract String getCountRecordsSql();
+    /**
+     *
+     * @return returns a String that represents SQL needed to delete an entity by ID,
+     * the SQL must contain one SQL parameter i.e. "?" that will bind to the
+     * entities's ID
+     */
+    abstract String getDeleteByIdSql();
+    abstract String getDeleteByMultipleIdSql();
+    abstract String getUpdateByIdSql();
 
     abstract T extractEntityFromResultSet(ResultSet rs) throws SQLException;
 

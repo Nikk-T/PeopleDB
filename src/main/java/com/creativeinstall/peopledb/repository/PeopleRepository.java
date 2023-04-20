@@ -24,6 +24,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
     public static final String FIND_ALL_SQL = "SELECT * FROM PEOPLE";
     public static final String COUNT_RECORDS_SQL = "SELECT ID FROM PEOPLE";
     public static final String DELETE_BY_ID_SQL = "DELETE FROM PEOPLE WHERE ID=?";
+    public static final String DELETE_BY_MULTIPLE_ID_SQL = "DELETE FROM PEOPLE WHERE ID IN (:ids)";
     public static final String UPDATE_PERSON_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
 
     public PeopleRepository(Connection connection) {  // This pattern called DEPENDANCY Injection - we are opening connection
@@ -42,6 +43,20 @@ public class PeopleRepository extends CRUDRepository<Person> {
     @Override
     String getFindAllSql() {
         return FIND_ALL_SQL;
+    }
+    @Override
+    String getCountRecordsSql() {return COUNT_RECORDS_SQL;}
+    @Override
+    String getDeleteByIdSql(){
+        return DELETE_BY_ID_SQL;
+    }
+    @Override
+    String getDeleteByMultipleIdSql(){
+        return DELETE_BY_MULTIPLE_ID_SQL;
+    }
+    @Override
+    String getUpdateByIdSql(){
+        return UPDATE_PERSON_SQL;
     }
 
     @Override
@@ -64,67 +79,33 @@ public class PeopleRepository extends CRUDRepository<Person> {
         ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
     }
 
-    public long count() {
-      Long counter = 0L;
-        try {
-            PreparedStatement ps = connection.prepareStatement(COUNT_RECORDS_SQL);
-            ResultSet resultSet = ps.executeQuery();
-            while (resultSet.next()) {
-                ++counter;
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return counter;
+    @Override
+    void MapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
+        ps.setString(1, entity.getFirstName());
+        ps.setString(2, entity.getLastName());
+        ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
+        ps.setBigDecimal(4, entity.getSalary());
+        ps.setLong(5, entity.getId());
     }
 
-    public void delete(Person person) {
-        try {
-            PreparedStatement ps = connection.prepareStatement(DELETE_BY_ID_SQL);
-            ps.setLong(1, person.getId());
-            int affectedRecordsCount = ps.executeUpdate();
-            System.out.println("Records affected: " + affectedRecordsCount);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void delete(Person...people) {  // This is varArg (remember - its simple version of an array !! )
-                                            // but varArg is actually an array, so we do next:
-        String ids = Arrays.stream(people)  // make stream out of the array
-                .map(p -> p.getId())        // now we made a stream out of array and converted it into stream of Longs
-                .map(String::valueOf)       // now its stream of strings, that represent ID
-                .collect(joining(",")); // and now we made a coma delimited string of ID's - like 10, 20, 30, 40 etc.
-                                                // and we will use it as an argument for SQL statement
-        System.out.println("IDs: " + ids);
-        System.out.println("DELETE FROM PEOPLE WHERE ID IN (:ids)".replace(":ids", ids));
-        try {
-            Statement stat = connection.createStatement();
-            int i = stat.executeUpdate("DELETE FROM PEOPLE WHERE ID IN (:ids)".replace(":ids", ids)); // we replace (:ids) with our actual String ids
-            System.out.println("Records affected: " + i);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void update(Person person) {
-        try {
-            PreparedStatement ps = connection.prepareStatement(UPDATE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, person.getFirstName());
-            ps.setString(2, person.getLastName());
-            ps.setTimestamp(3, convertDobFromZoned(person.getDob()));
-            ps.setBigDecimal(4, person.getSalary());
-            ps.setLong(5, person.getId());
-
-            int recordsAffected = ps.executeUpdate();
-
-            System.out.printf("Records affected %d%n", recordsAffected);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new UnableToSaveException("Tried to save person: "+person);
-        }
-    }
+//    public void update(Person person) {
+//        try {
+//            PreparedStatement ps = connection.prepareStatement(UPDATE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
+//            ps.setString(1, person.getFirstName());
+//            ps.setString(2, person.getLastName());
+//            ps.setTimestamp(3, convertDobFromZoned(person.getDob()));
+//            ps.setBigDecimal(4, person.getSalary());
+//            ps.setLong(5, person.getId());
+//
+//            int recordsAffected = ps.executeUpdate();
+//
+//            System.out.printf("Records affected %d%n", recordsAffected);
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            throw new UnableToSaveException("Tried to save person: "+person);
+//        }
+//    }
 
     private Timestamp convertDobFromZoned(ZonedDateTime dob) {
         return Timestamp.valueOf(dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());
