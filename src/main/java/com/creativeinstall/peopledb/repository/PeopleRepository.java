@@ -12,41 +12,33 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
 
-public class PeopleRepository {
+
+public class PeopleRepository extends CRUDRepository<Person> {
     public static final String SAVE_PERSON_SQL = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB) VALUES(?, ?, ?)";
     public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE WHERE ID=?";
     public static final String COUNT_RECORDS_SQL = "SELECT ID FROM PEOPLE";
     public static final String DELETE_BY_ID_SQL = "DELETE FROM PEOPLE WHERE ID=?";
     public static final String UPDATE_PERSON_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
-    private Connection connection;
-    public PeopleRepository(Connection connection) {  // This pattern called DEPENDANCY Injection - we are opening connection outside of the class and INJECTING in construction
-                                                        // And as the connection is being added in constructor - we CAN NOT make a copy of a class WITHOUT the connection
-        this.connection = connection;
+
+
+    public PeopleRepository(Connection connection) {  // This pattern called DEPENDANCY Injection - we are opening connection
+        super(connection);                              // outside of the class and INJECTING in construction
+    }                                                    // we CAN NOT make a copy of a class WITHOUT the connection
+    @Override
+    String getSaveSql() {
+        return SAVE_PERSON_SQL;
     }
 
-    public Person save(Person person) throws  UnableToSaveException {
-
-        try {
-            PreparedStatement ps = connection.prepareStatement(SAVE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, person.getFirstName());
-            ps.setString(2, person.getLastName());
-            ps.setTimestamp(3, convertDobFromZoned(person.getDob())); // SEE comment to method below
-
-            int recordsAffected = ps.executeUpdate();
-            ResultSet rs = ps.getGeneratedKeys();
-            while (rs.next()){
-                long id = rs.getLong(1);
-                person.setId(id);
-                System.out.println(person);
-            }
-            System.out.printf("Records affected %d%n", recordsAffected);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new UnableToSaveException("Tried to save person: "+person);
-        }
-        return person;
+    @Override
+    void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
+        ps.setString(1, entity.getFirstName());
+        ps.setString(2, entity.getLastName());
+        ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
     }
+
+
+
+
 
     public Optional<Person> findByID(Long id) {
         Person person = null;
@@ -138,4 +130,6 @@ public class PeopleRepository {
     // the maniac construction above is happened because in JAVA class Person() we decided to store DOB as a ZonedDateTime,
     // but in out SQL database we store a TimeStamp, so we need to convert our ZonedDateTime to time Zone of (+0) - its GMT
     // and then convert the result to LocalDate, that allows to convert to SQL timestamp
+
 }
+
