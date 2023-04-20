@@ -1,5 +1,6 @@
 package com.creativeinstall.peopledb.model;
 
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -9,12 +10,18 @@ public class Person {
     private String firstName;
     private String lastName;
     private ZonedDateTime dob;
+    private BigDecimal salary = new BigDecimal("0");
 
 
     public Person(String firstName, String lastName, ZonedDateTime dob) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.dob = dob;
+    }
+
+    public Person(Long id, String firstName, String lastName, ZonedDateTime dob) {
+        this(firstName, lastName, dob); // here we call a previous constructor from above
+        this.id = id;
     }
 
     public String getFirstName() {
@@ -47,6 +54,14 @@ public class Person {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public BigDecimal getSalary() {
+        return salary;
+    }
+
+    public void setSalary(BigDecimal salary) {
+        this.salary = salary;
     }
 
     @Override
