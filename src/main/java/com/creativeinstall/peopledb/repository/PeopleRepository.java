@@ -82,6 +82,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
     }
 
     @Override
+    @SQL("UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?")
     void MapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());

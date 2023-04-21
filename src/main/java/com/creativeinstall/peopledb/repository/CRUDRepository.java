@@ -3,16 +3,13 @@ package com.creativeinstall.peopledb.repository;
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
 import com.creativeinstall.peopledb.model.Entity;
-import com.creativeinstall.peopledb.model.Person;
 
-import java.math.BigDecimal;
 import java.sql.*;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.joining;
 
@@ -25,17 +22,18 @@ abstract class CRUDRepository<T extends Entity> {
         this.connection = connection;               // And as the connection is being added in constructor -
     }                                               // we CAN NOT make a copy of a class WITHOUT the connection
 
-    private String getSaveSqlByAnnotation(){
-        return Arrays.stream(this.getClass().getDeclaredMethods())            // This mad construction scans the metods of this class
-                .filter(m -> "mapForSave".contentEquals(m.getName()))  // makes stream of names, looking for name mapForSave in the stream
+    private String getSqlByAnnotation(String methodName, Supplier<String> sqlGetter){
+        return Arrays.stream(this.getClass().getDeclaredMethods())    // This mad construction scans the metods of this class
+                .filter(m -> methodName.contentEquals(m.getName()))  // makes stream of names, looking for name that was passed in by a parameter in the stream
                 .map(m -> m.getAnnotation(SQL.class))  //Now it looks for the annotation of the method mapForSave
                 .map(SQL::value)   //and saves it into string
-                .findFirst().orElse(getSaveSql()); // if no annotation found - use getSaveSQL method
+                .findFirst().orElseGet(sqlGetter); // if no annotation found - use the method that was passed as a second parameter
     }
     public T save(T entity) throws UnableToSaveException {
 
         try {
-            PreparedStatement ps = connection.prepareStatement(getSaveSqlByAnnotation(), Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement(
+                    getSqlByAnnotation("mapForSave", this::getSaveSql), Statement.RETURN_GENERATED_KEYS);
             mapForSave(entity, ps);
 
             int recordsAffected = ps.executeUpdate();
