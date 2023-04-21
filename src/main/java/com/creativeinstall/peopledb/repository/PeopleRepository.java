@@ -1,5 +1,6 @@
 package com.creativeinstall.peopledb.repository;
 
+import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
 import com.creativeinstall.peopledb.model.Person;
 
@@ -30,10 +31,10 @@ public class PeopleRepository extends CRUDRepository<Person> {
     public PeopleRepository(Connection connection) {  // This pattern called DEPENDANCY Injection - we are opening connection
         super(connection);                              // outside of the class and INJECTING in construction
     }                                                    // we CAN NOT make a copy of a class WITHOUT the connection
-    @Override
-    String getSaveSql() {
-        return SAVE_PERSON_SQL;
-    }
+//    @Override
+//    String getSaveSql() {
+//        return SAVE_PERSON_SQL;
+//    }
 
     @Override
     String getFindByIdSQL() {
@@ -73,6 +74,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
     }
 
     @Override
+    @SQL("INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB) VALUES(?, ?, ?)")
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
@@ -88,24 +90,6 @@ public class PeopleRepository extends CRUDRepository<Person> {
         ps.setLong(5, entity.getId());
     }
 
-//    public void update(Person person) {
-//        try {
-//            PreparedStatement ps = connection.prepareStatement(UPDATE_PERSON_SQL, Statement.RETURN_GENERATED_KEYS);
-//            ps.setString(1, person.getFirstName());
-//            ps.setString(2, person.getLastName());
-//            ps.setTimestamp(3, convertDobFromZoned(person.getDob()));
-//            ps.setBigDecimal(4, person.getSalary());
-//            ps.setLong(5, person.getId());
-//
-//            int recordsAffected = ps.executeUpdate();
-//
-//            System.out.printf("Records affected %d%n", recordsAffected);
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//            throw new UnableToSaveException("Tried to save person: "+person);
-//        }
-//    }
 
     private Timestamp convertDobFromZoned(ZonedDateTime dob) {
         return Timestamp.valueOf(dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());

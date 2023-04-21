@@ -81,8 +81,11 @@ public class PeopleRepositoryTests {
     @Test
     public void canGetCount() {
         long startCount = repo.count();
-        repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
-        repo.save(new Person("Bart", "Maniac", ZonedDateTime.of(1982,11,15,15,15,00,00, ZoneId.of("+2"))));
+        repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,
+                15,15,00,00, ZoneId.of("+2"))));
+
+        repo.save(new Person("Bart", "Maniac", ZonedDateTime.of(1982,11,15,
+                15,15,00,00, ZoneId.of("+2"))));
         long endCount = repo.count();
         Assertions.assertThat(endCount).isEqualTo(startCount + 2);
         System.out.println("Total amount of records is: " + endCount);
@@ -90,7 +93,9 @@ public class PeopleRepositoryTests {
 
     @Test
     public void canDelete() {
-        Person savedPerson = repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
+        Person savedPerson = repo.save(new Person("John", "Smith",
+                ZonedDateTime.of(1980,11,15,15,15,00,00,
+                        ZoneId.of("+2"))));
         long startCount = repo.count();
         repo.delete(savedPerson);
         long endCount = repo.count();
@@ -99,8 +104,12 @@ public class PeopleRepositoryTests {
 
     @Test
     public void canDeleteMultiplePeople() {
-        Person p1 = repo.save(new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2"))));
-        Person p2 = repo.save(new Person("Bart", "Maniac", ZonedDateTime.of(1982,11,15,15,15,00,00, ZoneId.of("+2"))));
+        Person p1 = repo.save(new Person("John", "Smith",
+                ZonedDateTime.of(1980,11,15,15,15,00,00,
+                        ZoneId.of("+2"))));
+        Person p2 = repo.save(new Person("Bart", "Maniac",
+                ZonedDateTime.of(1982,11,15,15,15,00,00,
+                        ZoneId.of("+2"))));
         repo.delete(p1, p2);
     }
     @Test

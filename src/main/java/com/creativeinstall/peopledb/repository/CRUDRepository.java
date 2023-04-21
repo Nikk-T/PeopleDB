@@ -1,5 +1,6 @@
 package com.creativeinstall.peopledb.repository;
 
+import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
 import com.creativeinstall.peopledb.model.Entity;
 import com.creativeinstall.peopledb.model.Person;
@@ -24,11 +25,17 @@ abstract class CRUDRepository<T extends Entity> {
         this.connection = connection;               // And as the connection is being added in constructor -
     }                                               // we CAN NOT make a copy of a class WITHOUT the connection
 
-
+    private String getSaveSqlByAnnotation(){
+        return Arrays.stream(this.getClass().getDeclaredMethods())            // This mad construction scans the metods of this class
+                .filter(m -> "mapForSave".contentEquals(m.getName()))  // makes stream of names, looking for name mapForSave in the stream
+                .map(m -> m.getAnnotation(SQL.class))  //Now it looks for the annotation of the method mapForSave
+                .map(SQL::value)   //and saves it into string
+                .findFirst().orElse(getSaveSql()); // if no annotation found - use getSaveSQL method
+    }
     public T save(T entity) throws UnableToSaveException {
 
         try {
-            PreparedStatement ps = connection.prepareStatement(getSaveSql(), Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement(getSaveSqlByAnnotation(), Statement.RETURN_GENERATED_KEYS);
             mapForSave(entity, ps);
 
             int recordsAffected = ps.executeUpdate();
@@ -134,7 +141,9 @@ abstract class CRUDRepository<T extends Entity> {
 
     abstract void mapForSave(T entity, PreparedStatement ps) throws SQLException ; // SEE comment to method below
 
-    abstract String getSaveSql();
+    protected String getSaveSql() { // it can not be abstract anymore - as its used if nothing found in annotations
+        return "";
+    };
 
     /**
      *
