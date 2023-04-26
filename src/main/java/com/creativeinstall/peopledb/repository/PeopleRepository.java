@@ -20,7 +20,9 @@ import static java.util.stream.Collectors.joining;
 // So using CRUDRepository we can create multiple repositories for different objects
 
 public class PeopleRepository extends CRUDRepository<Person> {
-    public static final String SAVE_PERSON_SQL = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB) VALUES(?, ?, ?)";
+    public static final String SAVE_PERSON_SQL = """
+                    INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL) 
+                    VALUES(?, ?, ?, ?, ?)""";
     public static final String FIND_BY_ID_SQL = "SELECT ID, FIRST_NAME, LAST_NAME, DOB, SALARY FROM PEOPLE WHERE ID=?";
     public static final String FIND_ALL_SQL = "SELECT * FROM PEOPLE";
     public static final String COUNT_RECORDS_SQL = "SELECT ID FROM PEOPLE";
@@ -74,11 +76,13 @@ public class PeopleRepository extends CRUDRepository<Person> {
     }
 
     @Override
-    @SQL("INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB) VALUES(?, ?, ?)")
+    @SQL("INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL) VALUES(?, ?, ?, ?, ?)")
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
         ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
+        ps.setBigDecimal(4, entity.getSalary());
+        ps.setString(5, entity.getEmail());
     }
 
     @Override

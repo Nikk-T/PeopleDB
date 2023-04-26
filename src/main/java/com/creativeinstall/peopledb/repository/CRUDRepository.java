@@ -41,9 +41,9 @@ abstract class CRUDRepository<T extends Entity> {
             while (rs.next()){
                 long id = rs.getLong(1);
                 entity.setId(id);
-                System.out.println(entity);
+   //             System.out.println(entity);
             }
-            System.out.printf("Records affected %d%n", recordsAffected);
+   //         System.out.printf("Records affected %d%n", recordsAffected);
 
         } catch (SQLException e) {
             e.printStackTrace();

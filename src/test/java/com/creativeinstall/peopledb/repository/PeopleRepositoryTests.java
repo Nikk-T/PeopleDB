@@ -6,6 +6,7 @@ import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ClassBasedNavigableIterableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -148,32 +150,28 @@ public class PeopleRepositoryTests {
     }
 
     @Test
+    @Disabled // need to run it only once.. to fil the DB with records
     public void canSaveFiveMillionPeople() throws SQLException, IOException {
 
             long startTime = System.currentTimeMillis();
 
             Files.lines(Path.of("/Users/nikolaytaganov/IdeaProjects/Neutrino_Course/Employees/Hr5m.csv"))
                     .skip(1)
-                    .limit(10)
                     .map(s -> s.split(","))
                     .map(a -> {
                         LocalDate dob = LocalDate.parse(a[10], DateTimeFormatter.ofPattern("M/d/yyyy"));
-                        LocalTime tob = LocalTime.parse(a[11], DateTimeFormatter.ofPattern("hh:mm:ss a"));
+                        LocalTime tob = LocalTime.parse(a[11], DateTimeFormatter.ofPattern("hh:mm:ss a").withLocale(Locale.US));
                         LocalDateTime dtob = LocalDateTime.of(dob, tob);
                         ZonedDateTime zdtob = ZonedDateTime.of(dtob, ZoneId.of("+0"));
                         Person person = new Person(a[2], a[4], zdtob);
-                        person.setSalary(new BigDecimal(a[26]));
+                        person.setSalary(new BigDecimal(a[25]));
                         person.setEmail(a[6]);
                         return person;
                     })
-                    .forEach(repo::save);
+                    .forEach(s -> repo.save(s));
 
+        //    connection.commit();  // safety
 
-
-
-        Person john = new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2")));
-        Person savedPerson = repo.save(john);
-        Assertions.assertThat(savedPerson.getId()).isGreaterThan(0);
     }
 
 }
