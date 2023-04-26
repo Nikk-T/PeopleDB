@@ -11,6 +11,7 @@ public class Person implements Entity{
     private String lastName;
     private ZonedDateTime dob;
     private BigDecimal salary = new BigDecimal("0");
+    private String email;
 
 
     public Person(String firstName, String lastName, ZonedDateTime dob) {
@@ -64,6 +65,14 @@ public class Person implements Entity{
 
     public void setSalary(BigDecimal salary) {
         this.salary = salary;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     @Override

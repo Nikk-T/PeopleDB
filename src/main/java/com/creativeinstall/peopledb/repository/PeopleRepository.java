@@ -55,10 +55,10 @@ public class PeopleRepository extends CRUDRepository<Person> {
     String getDeleteByMultipleIdSql(){
         return DELETE_BY_MULTIPLE_ID_SQL;
     }
-    @Override
-    String getUpdateByIdSql(){
-        return UPDATE_PERSON_SQL;
-    }
+//    @Override
+//    String getUpdateByIdSql(){
+//        return UPDATE_PERSON_SQL;
+//    }
 
     @Override
     Person extractEntityFromResultSet(ResultSet resultSet) throws SQLException {
@@ -83,7 +83,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
 
     @Override
     @SQL("UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?")
-    void MapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
+    void mapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
         ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));

@@ -8,12 +8,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.Timestamp;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -122,6 +126,9 @@ public class PeopleRepositoryTests {
         Assertions.assertThat(foundPersonAfterUpdate.getSalary()).isNotEqualTo(foundPersonBeforeUpdate.getSalary());
     }
 
+
+
+
     @Test // this tes actually does not test System under test, just local test if srteam approach will work
     public void experiment() {
         Person p1 = new Person (10L, null, null, null);
@@ -140,5 +147,33 @@ public class PeopleRepositoryTests {
         System.out.println(ids);
     }
 
+    @Test
+    public void canSaveFiveMillionPeople() throws SQLException, IOException {
+
+            long startTime = System.currentTimeMillis();
+
+            Files.lines(Path.of("/Users/nikolaytaganov/IdeaProjects/Neutrino_Course/Employees/Hr5m.csv"))
+                    .skip(1)
+                    .limit(10)
+                    .map(s -> s.split(","))
+                    .map(a -> {
+                        LocalDate dob = LocalDate.parse(a[10], DateTimeFormatter.ofPattern("M/d/yyyy"));
+                        LocalTime tob = LocalTime.parse(a[11], DateTimeFormatter.ofPattern("hh:mm:ss a"));
+                        LocalDateTime dtob = LocalDateTime.of(dob, tob);
+                        ZonedDateTime zdtob = ZonedDateTime.of(dtob, ZoneId.of("+0"));
+                        Person person = new Person(a[2], a[4], zdtob);
+                        person.setSalary(new BigDecimal(a[26]));
+                        person.setEmail(a[6]);
+                        return person;
+                    })
+                    .forEach(repo::save);
+
+
+
+
+        Person john = new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2")));
+        Person savedPerson = repo.save(john);
+        Assertions.assertThat(savedPerson.getId()).isGreaterThan(0);
+    }
 
 }

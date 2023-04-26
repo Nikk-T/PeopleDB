@@ -122,8 +122,8 @@ abstract class CRUDRepository<T extends Entity> {
 
     public void update(T entity) {
         try {
-            PreparedStatement ps = connection.prepareStatement(getUpdateByIdSql(), Statement.RETURN_GENERATED_KEYS);
-            MapForUpdate(entity, ps);
+            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation("mapForUpdate", this::getUpdateByIdSql), Statement.RETURN_GENERATED_KEYS);
+            mapForUpdate(entity, ps);
 
             int recordsAffected = ps.executeUpdate();
 
@@ -135,7 +135,7 @@ abstract class CRUDRepository<T extends Entity> {
         }
     }
 
-    abstract void MapForUpdate(T entity, PreparedStatement ps) throws SQLException;
+    abstract void mapForUpdate(T entity, PreparedStatement ps) throws SQLException;
 
     abstract void mapForSave(T entity, PreparedStatement ps) throws SQLException ; // SEE comment to method below
 
@@ -160,7 +160,9 @@ abstract class CRUDRepository<T extends Entity> {
      */
     abstract String getDeleteByIdSql();
     abstract String getDeleteByMultipleIdSql();
-    abstract String getUpdateByIdSql();
+    protected String getUpdateByIdSql(){
+        return "";
+    }
 
     abstract T extractEntityFromResultSet(ResultSet rs) throws SQLException;
 
