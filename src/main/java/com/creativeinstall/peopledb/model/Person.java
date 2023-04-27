@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Person{
     @Id
@@ -16,7 +17,7 @@ public class Person{
     private ZonedDateTime dob;
     private BigDecimal salary = new BigDecimal("0");
     private String email;
-    private Address homeAddress;
+    private Optional<Address> homeAddress = Optional.empty(); //refactored from just address in lesson 220
 
 
     public Person(String firstName, String lastName, ZonedDateTime dob) {
@@ -76,9 +77,9 @@ public class Person{
         this.email = email;
     }
     public void setHomeAddress(Address homeAddress) {
-        this.homeAddress = homeAddress;
+        this.homeAddress = Optional.ofNullable(homeAddress); //refactored from just address in lesson 220
     }
-    public Address getHomeAddress() {
+    public Optional<Address> getHomeAddress() {
         return homeAddress;
     }
 

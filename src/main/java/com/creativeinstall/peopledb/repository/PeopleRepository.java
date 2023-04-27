@@ -60,13 +60,17 @@ public class PeopleRepository extends CRUDRepository<Person> {
     @Override
     @SQL(value = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS) VALUES(?, ?, ?, ?, ?, ?)", operationType = CrudOperation.SAVE)
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
-        Address savedAddress = addressRepository.save(entity.getHomeAddress());
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
         ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
         ps.setBigDecimal(4, entity.getSalary());
         ps.setString(5, entity.getEmail());
-        ps.setLong(6, savedAddress.id());
+        if (entity.getHomeAddress().isPresent()) {              // we need this if because not all records in our DB has address
+            Address savedAddress = addressRepository.save(entity.getHomeAddress().get()); // .get() - because of Optional()
+            ps.setLong(6, savedAddress.id());
+        } else {
+            ps.setObject(6, null); // if no address - just putting general null not attached to ANY type
+        }
     }
 
     @Override

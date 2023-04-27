@@ -24,7 +24,6 @@ import java.util.Locale;
 import java.util.Optional;
 
 import static java.util.stream.Collectors.joining;
-import static org.assertj.core.api.FactoryBasedNavigableListAssert.assertThat;
 
 public class PeopleRepositoryTests {
 
@@ -69,7 +68,7 @@ public class PeopleRepositoryTests {
         Address address = new Address(null,"123 Beatle st.", "Apt 1a.", "Wala wala", "WA", "90210", "United States", "Fulton County", Region.WEST);
         bobby.setHomeAddress(address);
         Person savedPerson = repo.save(bobby);
-        Assertions.assertThat(savedPerson.getHomeAddress().id()).isGreaterThan(0);
+        Assertions.assertThat(savedPerson.getHomeAddress().get().id()).isGreaterThan(0);
     }
     @Test
     public void canFindPersonById() {
