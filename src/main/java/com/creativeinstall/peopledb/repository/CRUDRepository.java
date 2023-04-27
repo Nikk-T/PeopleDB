@@ -5,7 +5,6 @@ import com.creativeinstall.peopledb.annotation.MultiSQL;
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
 import com.creativeinstall.peopledb.model.CrudOperation;
-import com.creativeinstall.peopledb.model.Entity;
 
 import java.sql.*;
 import java.util.ArrayList;
