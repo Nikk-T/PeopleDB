@@ -1,5 +1,6 @@
 package com.creativeinstall.peopledb.repository;
 
+import com.creativeinstall.peopledb.annotation.MultiSQL;
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
 import com.creativeinstall.peopledb.model.CrudOperation;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 
@@ -24,12 +26,23 @@ abstract class CRUDRepository<T extends Entity> {
     }                                               // we CAN NOT make a copy of a class WITHOUT the connection
 
     private String getSqlByAnnotation(CrudOperation operationType, Supplier<String> sqlGetter){
+        // This construction scans the methods of this class, makes stream of names
+        // and looking for multiple SQL annotations, maps them and making stream of SQL annotations
+        Stream<SQL> multiSqlStream = Arrays.stream(this.getClass().getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(MultiSQL.class))
+                .map(m -> m.getAnnotation(MultiSQL.class))
+                .flatMap(msql -> Arrays.stream(msql.value()));
 
-        return Arrays.stream(this.getClass().getDeclaredMethods())    // This mad construction scans the metods of this class
-                .filter(m -> m.isAnnotationPresent(SQL.class))  // makes stream of names, looking for name that was passed in by a parameter in the stream
-                .map(m -> m.getAnnotation(SQL.class))  //Now it looks for the annotation of the method mapForSave
-                .filter(a -> a.operationType().equals(operationType)) // If the annotation we found is equal to the one passed in - then go for it
-                .map(SQL::value)   //and saves it into string
+        // This construction scans the methods of this class, makes stream of names
+        // and looking for single SQL annotations, maps them and making stream of SQL annotations
+        Stream<SQL> sqlStream = Arrays.stream(this.getClass().getDeclaredMethods())
+                .filter(m -> m.isAnnotationPresent(SQL.class))
+                .map(m -> m.getAnnotation(SQL.class));
+        // Now we concat both streams, and looking if the annotation we found is equal
+        // to the one passed in - then go saves it into string and returns
+        return Stream.concat(multiSqlStream, sqlStream)
+                .filter(a -> a.operationType().equals(operationType))
+                .map(SQL::value)   //and
                 .findFirst().orElseGet(sqlGetter); // if no annotation found - use the method that was passed as a second parameter
     }
     public T save(T entity) throws UnableToSaveException {
@@ -143,7 +156,7 @@ abstract class CRUDRepository<T extends Entity> {
     abstract void mapForSave(T entity, PreparedStatement ps) throws SQLException ; // SEE comment to method below
 
     protected String getSaveSql() { // it can not be abstract anymore - as its used if nothing found in annotations
-        return "";
+        throw new RuntimeException("SQL not defined..");
     };
 
     /**
@@ -153,13 +166,13 @@ abstract class CRUDRepository<T extends Entity> {
      * entities's ID
      */
     protected String getFindByIdSQL(){ // it can not be abstract anymore - as its used if nothing found in annotations
-        return "";
+        throw new RuntimeException("SQL not defined..");
     };
     protected String getFindAllSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
-        return "";
+        throw new RuntimeException("SQL not defined..");
     };
     protected String getCountRecordsSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
-        return "";
+        throw new RuntimeException("SQL not defined..");
     };
     /**
      *
@@ -168,13 +181,13 @@ abstract class CRUDRepository<T extends Entity> {
      * entities's ID
      */
     protected String getDeleteByIdSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
-        return "";
+        throw new RuntimeException("SQL not defined..");
     };
     protected String getDeleteByMultipleIdSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
-        return "";
+        throw new RuntimeException("SQL not defined..");
     };
     protected String getUpdateByIdSql(){
-        return "";
+         throw new RuntimeException("SQL not defined..");
     }
 
     abstract T extractEntityFromResultSet(ResultSet rs) throws SQLException;

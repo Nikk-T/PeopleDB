@@ -81,6 +81,7 @@ public class PeopleRepositoryTests {
     }
 
     @Test
+    @Disabled // disabled because we have 5M records. its taking too long
     public void canFindAll() {
         List<Person> people = repo.findAll();
         System.out.println(people);

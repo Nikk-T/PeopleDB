@@ -66,6 +66,9 @@ public class PeopleRepository extends CRUDRepository<Person> {
     @Override
     @SQL(value = FIND_BY_ID_SQL, operationType = CrudOperation.FIND_BY_ID) // to make string shorter - we just referring to the constant above
     @SQL(value = FIND_ALL_SQL, operationType = CrudOperation.FIND_ALL)      //  to the constant above
+    @SQL(value = COUNT_RECORDS_SQL, operationType = CrudOperation.COUNT) // Count(), Delete(), DeleteAll() methods
+    @SQL(value = DELETE_BY_ID_SQL, operationType = CrudOperation.DELETE_ONE) // does not use the method below, but we
+    @SQL(value = DELETE_BY_MULTIPLE_ID_SQL, operationType = CrudOperation.DELETE_MANY) //can put its SQL annotation anywhere in the class
     Person extractEntityFromResultSet(ResultSet resultSet) throws SQLException {
         Long personId = resultSet.getLong("ID");
         String firstName = resultSet.getString("FIRST_NAME");
