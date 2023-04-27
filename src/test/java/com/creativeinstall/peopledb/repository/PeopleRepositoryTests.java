@@ -64,8 +64,7 @@ public class PeopleRepositoryTests {
     }
 
     @Test
-    @Disabled
-    public void canSavePersonWithAddress() {
+    public void canSavePersonWithAddress() throws SQLException {
         Person bobby = new Person("Jeremy", "Jones", ZonedDateTime.of(1974,11,18,17,15,00,00, ZoneId.of("+2")));
         Address address = new Address(null,"123 Beatle st.", "Apt 1a.", "Wala wala", "WA", "90210", "United States", "Fulton County", Region.WEST);
         bobby.setHomeAddress(address);

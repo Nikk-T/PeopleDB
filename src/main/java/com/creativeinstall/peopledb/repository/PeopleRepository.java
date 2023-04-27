@@ -2,6 +2,7 @@ package com.creativeinstall.peopledb.repository;
 
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
+import com.creativeinstall.peopledb.model.Address;
 import com.creativeinstall.peopledb.model.CrudOperation;
 import com.creativeinstall.peopledb.model.Person;
 
@@ -21,6 +22,7 @@ import static java.util.stream.Collectors.joining;
 // So using CRUDRepository we can create multiple repositories for different objects
 
 public class PeopleRepository extends CRUDRepository<Person> {
+    private AddressRepository addressRepository = null;
     public static final String SAVE_PERSON_SQL = """
                     INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL) 
                     VALUES(?, ?, ?, ?, ?)""";
@@ -32,7 +34,8 @@ public class PeopleRepository extends CRUDRepository<Person> {
     public static final String UPDATE_PERSON_SQL = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?";
 
     public PeopleRepository(Connection connection) {  // This pattern called DEPENDANCY Injection - we are opening connection
-        super(connection);                              // outside of the class and INJECTING in construction
+        super(connection);// outside of the class and INJECTING in construction
+        addressRepository = new AddressRepository(connection);
     }                                                    // we CAN NOT make a copy of a class WITHOUT the connection
 
     @Override
@@ -55,13 +58,15 @@ public class PeopleRepository extends CRUDRepository<Person> {
     }
 
     @Override
-    @SQL(value = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL) VALUES(?, ?, ?, ?, ?)", operationType = CrudOperation.SAVE)
+    @SQL(value = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL, HOME_ADDRESS) VALUES(?, ?, ?, ?, ?, ?)", operationType = CrudOperation.SAVE)
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
+        Address savedAddress = addressRepository.save(entity.getHomeAddress());
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
         ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
         ps.setBigDecimal(4, entity.getSalary());
         ps.setString(5, entity.getEmail());
+        ps.setLong(6, savedAddress.id());
     }
 
     @Override
