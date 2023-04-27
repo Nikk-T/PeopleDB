@@ -34,34 +34,6 @@ public class PeopleRepository extends CRUDRepository<Person> {
     public PeopleRepository(Connection connection) {  // This pattern called DEPENDANCY Injection - we are opening connection
         super(connection);                              // outside of the class and INJECTING in construction
     }                                                    // we CAN NOT make a copy of a class WITHOUT the connection
-//    @Override
-//    String getSaveSql() {
-//        return SAVE_PERSON_SQL;
-//    }
-
-//    @Override
-//    String getFindByIdSQL() {
-//        return FIND_BY_ID_SQL;
-//    }
-
-//    @Override
-//    String getFindAllSql() {
-//        return FIND_ALL_SQL;
-//    }
-//    @Override
-//    String getCountRecordsSql() {return COUNT_RECORDS_SQL;}
-//    @Override
-//    String getDeleteByIdSql(){
-//        return DELETE_BY_ID_SQL;
-//    }
-//    @Override
-//    String getDeleteByMultipleIdSql(){
-//        return DELETE_BY_MULTIPLE_ID_SQL;
-//    }
-//    @Override
-//    String getUpdateByIdSql(){
-//        return UPDATE_PERSON_SQL;
-//    }
 
     @Override
     @SQL(value = FIND_BY_ID_SQL, operationType = CrudOperation.FIND_BY_ID) // to make string shorter - we just referring to the constant above
@@ -69,6 +41,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
     @SQL(value = COUNT_RECORDS_SQL, operationType = CrudOperation.COUNT) // Count(), Delete(), DeleteAll() methods
     @SQL(value = DELETE_BY_ID_SQL, operationType = CrudOperation.DELETE_ONE) // does not use the method below, but we
     @SQL(value = DELETE_BY_MULTIPLE_ID_SQL, operationType = CrudOperation.DELETE_MANY) //can put its SQL annotation anywhere in the class
+
     Person extractEntityFromResultSet(ResultSet resultSet) throws SQLException {
         Long personId = resultSet.getLong("ID");
         String firstName = resultSet.getString("FIRST_NAME");
@@ -98,7 +71,6 @@ public class PeopleRepository extends CRUDRepository<Person> {
         ps.setString(2, entity.getLastName());
         ps.setTimestamp(3, convertDobFromZoned(entity.getDob()));
         ps.setBigDecimal(4, entity.getSalary());
-        ps.setLong(5, entity.getId());
     }
 
 

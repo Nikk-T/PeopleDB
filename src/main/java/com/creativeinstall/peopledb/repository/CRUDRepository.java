@@ -1,5 +1,6 @@
 package com.creativeinstall.peopledb.repository;
 
+import com.creativeinstall.peopledb.annotation.Id;
 import com.creativeinstall.peopledb.annotation.MultiSQL;
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 
-abstract class CRUDRepository<T extends Entity> {
+abstract class CRUDRepository<T> {
 
     protected Connection connection;
 
@@ -45,6 +46,35 @@ abstract class CRUDRepository<T extends Entity> {
                 .map(SQL::value)   //and
                 .findFirst().orElseGet(sqlGetter); // if no annotation found - use the method that was passed as a second parameter
     }
+
+    private Long findIdByAnnotation(T entity) {
+        return Arrays.stream(entity.getClass().getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(Id.class))
+                .map(f -> {
+                    f.setAccessible(true);
+                    Long id = null;
+                    try {
+                        id = (long)f.get(entity); // (long) - we casting to long what ever we found annotated by id
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return id;
+                })
+                .findFirst().orElseThrow(() -> new RuntimeException("No ID annotation field found"));
+    }
+
+    private void setIdByAnnotation(Long id, T entity) {
+        Arrays.stream(entity.getClass().getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(Id.class))
+                .forEach(f -> {
+                    f.setAccessible(true);
+                    try {
+                        f.set(entity, id);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException("Unable to set ID value");
+                    }
+                });
+    }
     public T save(T entity) throws UnableToSaveException {
 
         try {
@@ -56,10 +86,8 @@ abstract class CRUDRepository<T extends Entity> {
             ResultSet rs = ps.getGeneratedKeys();
             while (rs.next()){
                 long id = rs.getLong(1);
-                entity.setId(id);
-   //             System.out.println(entity);
+                setIdByAnnotation(id, entity);
             }
-   //         System.out.printf("Records affected %d%n", recordsAffected);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -113,7 +141,7 @@ abstract class CRUDRepository<T extends Entity> {
     public void delete(T entity) {
         try {
             PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.DELETE_ONE, this::getDeleteByIdSql));
-            ps.setLong(1, entity.getId());
+            ps.setLong(1, findIdByAnnotation(entity));
             int affectedRecordsCount = ps.executeUpdate();
             System.out.println("Records affected: " + affectedRecordsCount);
         } catch (SQLException e) {
@@ -121,9 +149,11 @@ abstract class CRUDRepository<T extends Entity> {
         }
     }
 
+
+
     public void delete(T...entities) {  // This is varArg (remember - its simple version of an array !! )
         String ids = Arrays.stream(entities)  // make stream out of the array
-                .map(p -> p.getId())        // now we made a stream out of array and converted it into stream of Longs
+                .map(p -> findIdByAnnotation(p))        // now we made a stream out of array and converted it into stream of Longs
                 .map(String::valueOf)       // now its stream of strings, that represent ID
                 .collect(joining(",")); // and now we made a coma delimited string of ID's - like 10, 20, 30, 40 etc.
         // and we will use it as an argument for SQL statement
@@ -140,7 +170,7 @@ abstract class CRUDRepository<T extends Entity> {
         try {
             PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.UPDATE, this::getUpdateByIdSql), Statement.RETURN_GENERATED_KEYS);
             mapForUpdate(entity, ps);
-
+            ps.setLong(5, findIdByAnnotation(entity));
             int recordsAffected = ps.executeUpdate();
 
             System.out.printf("Records affected %d%n", recordsAffected);
