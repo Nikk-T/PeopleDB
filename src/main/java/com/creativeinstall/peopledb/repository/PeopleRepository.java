@@ -2,6 +2,7 @@ package com.creativeinstall.peopledb.repository;
 
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
+import com.creativeinstall.peopledb.model.CrudOperation;
 import com.creativeinstall.peopledb.model.Person;
 
 import java.math.BigDecimal;
@@ -38,31 +39,33 @@ public class PeopleRepository extends CRUDRepository<Person> {
 //        return SAVE_PERSON_SQL;
 //    }
 
-    @Override
-    String getFindByIdSQL() {
-        return FIND_BY_ID_SQL;
-    }
+//    @Override
+//    String getFindByIdSQL() {
+//        return FIND_BY_ID_SQL;
+//    }
 
-    @Override
-    String getFindAllSql() {
-        return FIND_ALL_SQL;
-    }
-    @Override
-    String getCountRecordsSql() {return COUNT_RECORDS_SQL;}
-    @Override
-    String getDeleteByIdSql(){
-        return DELETE_BY_ID_SQL;
-    }
-    @Override
-    String getDeleteByMultipleIdSql(){
-        return DELETE_BY_MULTIPLE_ID_SQL;
-    }
+//    @Override
+//    String getFindAllSql() {
+//        return FIND_ALL_SQL;
+//    }
+//    @Override
+//    String getCountRecordsSql() {return COUNT_RECORDS_SQL;}
+//    @Override
+//    String getDeleteByIdSql(){
+//        return DELETE_BY_ID_SQL;
+//    }
+//    @Override
+//    String getDeleteByMultipleIdSql(){
+//        return DELETE_BY_MULTIPLE_ID_SQL;
+//    }
 //    @Override
 //    String getUpdateByIdSql(){
 //        return UPDATE_PERSON_SQL;
 //    }
 
     @Override
+    @SQL(value = FIND_BY_ID_SQL, operationType = CrudOperation.FIND_BY_ID) // to make string shorter - we just referring to the constant above
+    @SQL(value = FIND_ALL_SQL, operationType = CrudOperation.FIND_ALL)      //  to the constant above
     Person extractEntityFromResultSet(ResultSet resultSet) throws SQLException {
         Long personId = resultSet.getLong("ID");
         String firstName = resultSet.getString("FIRST_NAME");
@@ -76,7 +79,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
     }
 
     @Override
-    @SQL("INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL) VALUES(?, ?, ?, ?, ?)")
+    @SQL(value = "INSERT INTO PEOPLE (FIRST_NAME, LAST_NAME, DOB, SALARY, EMAIL) VALUES(?, ?, ?, ?, ?)", operationType = CrudOperation.SAVE)
     void mapForSave(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());
@@ -86,7 +89,7 @@ public class PeopleRepository extends CRUDRepository<Person> {
     }
 
     @Override
-    @SQL("UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?")
+    @SQL(value = "UPDATE PEOPLE SET FIRST_NAME=?, LAST_NAME=?, DOB=?, SALARY=? WHERE ID=?", operationType = CrudOperation.UPDATE)
     void mapForUpdate(Person entity, PreparedStatement ps) throws SQLException {
         ps.setString(1, entity.getFirstName());
         ps.setString(2, entity.getLastName());

@@ -1,9 +1,9 @@
 package com.creativeinstall.peopledb.repository;
 
+import com.creativeinstall.peopledb.model.Address;
 import com.creativeinstall.peopledb.model.Person;
-import org.assertj.core.api.Assert;
+import com.creativeinstall.peopledb.model.Region;
 import org.assertj.core.api.Assertions;
-import org.assertj.core.api.ClassBasedNavigableIterableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.Timestamp;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -23,7 +22,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.FactoryBasedNavigableListAssert.assertThat;
@@ -65,6 +63,15 @@ public class PeopleRepositoryTests {
         Assertions.assertThat(savedPerson1.getId()).isNotEqualTo(savedPerson2.getId());
     }
 
+    @Test
+    @Disabled
+    public void canSavePersonWithAddress() {
+        Person bobby = new Person("Jeremy", "Jones", ZonedDateTime.of(1974,11,18,17,15,00,00, ZoneId.of("+2")));
+        Address address = new Address(null,"123 Beatle st.", "Apt 1a.", "Wala wala", "WA", "90210", "United States", "Fulton County", Region.WEST);
+        bobby.setHomeAddress(address);
+        Person savedPerson = repo.save(bobby);
+        Assertions.assertThat(savedPerson.getHomeAddress().id()).isGreaterThan(0);
+    }
     @Test
     public void canFindPersonById() {
         Person john = new Person("John", "Smith", ZonedDateTime.of(1980,11,15,15,15,00,00, ZoneId.of("+2")));

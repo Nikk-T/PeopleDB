@@ -12,6 +12,7 @@ public class Person implements Entity{
     private ZonedDateTime dob;
     private BigDecimal salary = new BigDecimal("0");
     private String email;
+    private Address homeAddress;
 
 
     public Person(String firstName, String lastName, ZonedDateTime dob) {
@@ -74,6 +75,12 @@ public class Person implements Entity{
     public void setEmail(String email) {
         this.email = email;
     }
+    public void setHomeAddress(Address homeAddress) {
+        this.homeAddress = homeAddress;
+    }
+    public Address getHomeAddress() {
+        return homeAddress;
+    }
 
     @Override
     public String toString() {
@@ -99,4 +106,5 @@ public class Person implements Entity{
     public int hashCode() {
         return Objects.hash(id, firstName, lastName, dob);
     }
+
 }

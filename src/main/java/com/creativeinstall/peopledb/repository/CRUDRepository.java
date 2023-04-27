@@ -2,6 +2,7 @@ package com.creativeinstall.peopledb.repository;
 
 import com.creativeinstall.peopledb.annotation.SQL;
 import com.creativeinstall.peopledb.exception.UnableToSaveException;
+import com.creativeinstall.peopledb.model.CrudOperation;
 import com.creativeinstall.peopledb.model.Entity;
 
 import java.sql.*;
@@ -22,10 +23,12 @@ abstract class CRUDRepository<T extends Entity> {
         this.connection = connection;               // And as the connection is being added in constructor -
     }                                               // we CAN NOT make a copy of a class WITHOUT the connection
 
-    private String getSqlByAnnotation(String methodName, Supplier<String> sqlGetter){
+    private String getSqlByAnnotation(CrudOperation operationType, Supplier<String> sqlGetter){
+
         return Arrays.stream(this.getClass().getDeclaredMethods())    // This mad construction scans the metods of this class
-                .filter(m -> methodName.contentEquals(m.getName()))  // makes stream of names, looking for name that was passed in by a parameter in the stream
+                .filter(m -> m.isAnnotationPresent(SQL.class))  // makes stream of names, looking for name that was passed in by a parameter in the stream
                 .map(m -> m.getAnnotation(SQL.class))  //Now it looks for the annotation of the method mapForSave
+                .filter(a -> a.operationType().equals(operationType)) // If the annotation we found is equal to the one passed in - then go for it
                 .map(SQL::value)   //and saves it into string
                 .findFirst().orElseGet(sqlGetter); // if no annotation found - use the method that was passed as a second parameter
     }
@@ -33,7 +36,7 @@ abstract class CRUDRepository<T extends Entity> {
 
         try {
             PreparedStatement ps = connection.prepareStatement(
-                    getSqlByAnnotation("mapForSave", this::getSaveSql), Statement.RETURN_GENERATED_KEYS);
+                    getSqlByAnnotation(CrudOperation.SAVE, this::getSaveSql), Statement.RETURN_GENERATED_KEYS);
             mapForSave(entity, ps);
 
             int recordsAffected = ps.executeUpdate();
@@ -55,7 +58,7 @@ abstract class CRUDRepository<T extends Entity> {
     public Optional<T> findByID(Long id) {
         T entity = null;
         try {
-            PreparedStatement ps = connection.prepareStatement(getFindByIdSQL());
+            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.FIND_BY_ID, this::getFindByIdSQL));
             ps.setLong(1, id);
             ResultSet resultSet = ps.executeQuery();
             while (resultSet.next()) {
@@ -69,7 +72,7 @@ abstract class CRUDRepository<T extends Entity> {
 
     public List<T> findAll(){
         List<T> entities = new ArrayList<>();
-        try {PreparedStatement ps = connection.prepareStatement(getFindAllSql());
+        try {PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.FIND_ALL, this::getFindAllSql));
             ResultSet rs = ps.executeQuery();
             while (rs.next()){
                 entities.add(extractEntityFromResultSet(rs));
@@ -83,7 +86,7 @@ abstract class CRUDRepository<T extends Entity> {
     public long count() {
         Long counter = 0L;
         try {
-            PreparedStatement ps = connection.prepareStatement(getCountRecordsSql());
+            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.COUNT, this::getCountRecordsSql));
             ResultSet resultSet = ps.executeQuery();
             while (resultSet.next()) {
                 ++counter;
@@ -96,7 +99,7 @@ abstract class CRUDRepository<T extends Entity> {
 
     public void delete(T entity) {
         try {
-            PreparedStatement ps = connection.prepareStatement(getDeleteByIdSql());
+            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.DELETE_ONE, this::getDeleteByIdSql));
             ps.setLong(1, entity.getId());
             int affectedRecordsCount = ps.executeUpdate();
             System.out.println("Records affected: " + affectedRecordsCount);
@@ -113,7 +116,7 @@ abstract class CRUDRepository<T extends Entity> {
         // and we will use it as an argument for SQL statement
         try {
             Statement stat = connection.createStatement();
-            int i = stat.executeUpdate(getDeleteByMultipleIdSql().replace(":ids", ids)); // we replace (:ids) with our actual String ids
+            int i = stat.executeUpdate(getSqlByAnnotation(CrudOperation.DELETE_MANY, this::getDeleteByMultipleIdSql).replace(":ids", ids)); // we replace (:ids) with our actual String ids
             System.out.println("Records affected: " + i);
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -122,7 +125,7 @@ abstract class CRUDRepository<T extends Entity> {
 
     public void update(T entity) {
         try {
-            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation("mapForUpdate", this::getUpdateByIdSql), Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement(getSqlByAnnotation(CrudOperation.UPDATE, this::getUpdateByIdSql), Statement.RETURN_GENERATED_KEYS);
             mapForUpdate(entity, ps);
 
             int recordsAffected = ps.executeUpdate();
@@ -149,17 +152,27 @@ abstract class CRUDRepository<T extends Entity> {
      * the SQL must contain one SQL parameter i.e. "?" that will bind to the
      * entities's ID
      */
-    abstract String getFindByIdSQL();
-    abstract String getFindAllSql();
-    abstract String getCountRecordsSql();
+    protected String getFindByIdSQL(){ // it can not be abstract anymore - as its used if nothing found in annotations
+        return "";
+    };
+    protected String getFindAllSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
+        return "";
+    };
+    protected String getCountRecordsSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
+        return "";
+    };
     /**
      *
      * @return returns a String that represents SQL needed to delete an entity by ID,
      * the SQL must contain one SQL parameter i.e. "?" that will bind to the
      * entities's ID
      */
-    abstract String getDeleteByIdSql();
-    abstract String getDeleteByMultipleIdSql();
+    protected String getDeleteByIdSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
+        return "";
+    };
+    protected String getDeleteByMultipleIdSql(){ // it can not be abstract anymore - as its used if nothing found in annotations
+        return "";
+    };
     protected String getUpdateByIdSql(){
         return "";
     }
